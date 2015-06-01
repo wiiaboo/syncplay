@@ -33,6 +33,7 @@ class VlcPlayer(BasePlayer):
         self._duration = None
         self._filename = None
         self._filepath = None
+        self._position = None
         self._filechanged = False
         self._lastVLCPositionUpdate = None
         self.shownVLCLatencyError = False
@@ -90,8 +91,13 @@ class VlcPlayer(BasePlayer):
         self._pausedAsk.clear()
         self._listener.sendLine(".")
         if self._filename and not self._filechanged:
-            self._positionAsk.wait(constants.PLAYER_ASK_DELAY)
-            self._client.updatePlayerStatus(self._paused, self.getCalculatedPosition())
+            if constants.VLC_GUESS_POSITION_MODE:
+                self._positionAsk.wait(constants.PLAYER_ASK_DELAY)
+                self._client.updatePlayerStatus(self._paused, self.getCalculatedPosition())
+            else:
+                self._positionAsk.wait()
+                self._pausedAsk.wait()
+                self._client.updatePlayerStatus(self._paused, self._position)
         else:
             self._client.updatePlayerStatus(self._client.getGlobalPaused(), self._client.getGlobalPosition())
 
