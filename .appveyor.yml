@@ -1,9 +1,5 @@
 environment:
   MINICONDA: "C:\\Miniconda"
-  clone_folder: c:\projects\syncplay
-
-image:
-  - Visual Studio 2013
 
 platform: x86
 
@@ -11,44 +7,45 @@ configuration: Release
 
 init:
   - set PATH=C:\Miniconda;C:\Miniconda\Scripts;%PATH%
-  - cmd: conda create -n syncplay -y  
-  - cmd: activate syncplay
-  - cmd: conda install python pywin32 pyside -y
-  - cmd: pip install twisted py2exe_py2 zope.interface
-  - cmd: type nul > C:\Miniconda\envs\syncplay\lib\site-packages\zope\__init__.py
-  - cmd: pip freeze
-  - cmd: conda list
+  - conda create -n syncplay -y
+  - activate syncplay
+  - conda install python pywin32 pyside -y
+  - pip2 install twisted py2exe_py2 zope.interface
+  - type nul > C:\Miniconda\envs\syncplay\lib\site-packages\zope\__init__.py
+  - pip2 freeze
+  - conda list
+  - for /f %%a in ('git describe --tags --abbrev^=0 --match^=v*') do set gittagversion=%%a
   
 install:
-  - cmd: cd c:\projects\syncplay
-  - cmd: python buildPy2exe.py
-  - cmd: del C:\projects\syncplay\syncplay_v1.5.0\lib\DNSAPI.dll
-  - cmd: del C:\projects\syncplay\syncplay_v1.5.0\lib\MPR.dll
-  - cmd: mkdir C:\projects\syncplay\syncplay_v1.5.0\platforms
-  #- cmd: copy C:\Miniconda\envs\syncplay\library\plugins\platforms\qwindows.dll C:\projects\syncplay\syncplay_v1.5.0\platforms\
+  - cd %APPVEYOR_BUILD_FOLDER%
+  - py -2 buildPy2exe.py
+  - del syncplay_%gittagversion%\lib\DNSAPI.dll
+  - del syncplay_%gittagversion%\lib\MPR.dll
+  - mkdir syncplay_%gittagversion%\platforms
+  #- copy C:\Miniconda\envs\syncplay\library\plugins\platforms\qwindows.dll C:\projects\syncplay\syncplay_v1.5.0\platforms\
 
 # Not a project with an msbuild file, build done at install.
 build: off 
 
 artifacts:
-  path: 'syncplay_v1.5.0'
+  path: 'syncplay_$(gittagversion)'
   type: zip
   name: Syncplay_win
 
 # Push artefact to S3 bucket and list all
 before_deploy:
-  - cmd: dir
-  #- cmd: python -c "from PySide2 import QtCore; print QtCore.QLibraryInfo.location(QtCore.QLibraryInfo.PluginsPath)"
+  - dir
+  #- python -c "from PySide2 import QtCore; print QtCore.QLibraryInfo.location(QtCore.QLibraryInfo.PluginsPath)"
 
 # Deploy build to BinTray
 deploy:
   provider: BinTray
-  username: alby128
+  username: wiiaboo
   api_key:
-    secure: lAocj5KA9Z9x4BefQBIgNlQJbeW4qPBfCgYVBHMyOP3NgyhnMLmvR57ZCqtCKBlQ
-  subject: alby128
+    secure: DMsGKl2OCo4WG4xV308z/+W2bNkt91Lc9XIO8ZJWrOzmpuysa1x9zKK/NCWW/z6n
+  subject: wiiaboo
   repo: Syncplay
   package: Syncplay
-  version: "1.5.0"
+  version: $(gittagversion)
   publish: true
   override: true
